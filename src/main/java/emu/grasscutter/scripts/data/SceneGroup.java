@@ -123,7 +123,7 @@ public class SceneGroup {
 			variables = ScriptLoader.getSerializer().toList(SceneVar.class, bindings.get("variables"));
 			// NPC in groups
 			npc = ScriptLoader.getSerializer().toList(SceneNPC.class, bindings.get("npcs")).stream()
-					.collect(Collectors.toMap(x -> x.config_id, y -> y));
+					.collect(Collectors.toMap(x -> x.npc_id, y -> y));
 			npc.values().forEach(n -> n.group = this);
 
 			// Add monsters and gadgets to suite
