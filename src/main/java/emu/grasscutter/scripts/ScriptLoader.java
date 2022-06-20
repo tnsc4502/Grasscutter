@@ -13,6 +13,7 @@ import net.sandius.rembulan.compiler.CompilerChunkLoader;
 import org.terasology.jnlua.JavaFunction;
 import org.terasology.jnlua.LuaState;
 import org.terasology.jnlua.NamedJavaFunction;
+import org.terasology.jnlua.script.CompiledLuaScript;
 import org.terasology.jnlua.script.LuaBindings;
 import org.terasology.jnlua.script.LuaScriptEngine;
 
@@ -20,6 +21,7 @@ import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngineManager;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.lang.ref.SoftReference;
 import java.nio.file.Files;
@@ -112,21 +114,28 @@ public class ScriptLoader {
 		}
 
 		Grasscutter.getLogger().info("Loading script " + path);
-		var engine = manager.getEngineByName("Lua");
-
 		File file = new File(path);
 		if (!file.exists()) return null;
 
 		try {
-			var script = ((Compilable)getEngine()).compile("package.path = 'resources/scripts/?.lua;' " + Files.readString(file.toPath()));
-			script.getEngine().getContext().setAttribute("javax.script.filename", file.getName(), ScriptContext.ENGINE_SCOPE);
+			var binding = new LuaBindings(getEngine());
+			var L = binding.getLuaState();
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			synchronized(L) {
+				L.load((String)Files.readString(file.toPath()), file.getName());
+				try {
+					L.dump(out, false);
+				} finally {
+					L.pop(1);
+				}
+			}
+			var script = new CompiledLuaScript(getEngine(), out.toByteArray());
 			scriptsCache.put(path, new SoftReference<>(script));
 			return script;
 		} catch (Exception e) {
 			Grasscutter.getLogger().error("Loading script {} failed!", path, e);
 			return null;
 		}
-
 	}
 
 	public static SceneMeta getSceneMeta(int sceneId) {
