@@ -5,13 +5,11 @@ import emu.grasscutter.scripts.ScriptLoader;
 import emu.grasscutter.utils.Position;
 import lombok.Setter;
 import lombok.ToString;
+import org.terasology.jnlua.util.AbstractTableMap;
 
 import javax.script.Bindings;
 import javax.script.CompiledScript;
 import javax.script.ScriptException;
-
-import org.luaj.vm2.LuaTable;
-import org.luaj.vm2.LuaValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -123,12 +121,13 @@ public class SceneGroup {
 
 			// Garbages // TODO: fix properly later
 			Object garbagesValue = this.bindings.get("garbages");
-			if (garbagesValue instanceof LuaValue garbagesTable) {
+			if (garbagesValue instanceof AbstractTableMap garbagesTable) {
                 this.garbages = new SceneGarbage();
-				if (garbagesTable.checktable().get("gadgets") != LuaValue.NIL) {
-                    this.garbages.gadgets = ScriptLoader.getSerializer().toList(SceneGadget.class, garbagesTable.checktable().get("gadgets").checktable());
+				if (garbagesTable.get("gadgets") != null) {
+                    this.garbages.gadgets = (List<SceneGadget>) ScriptLoader.getSerializer().toList(SceneGadget.class, garbagesTable.get("gadgets"));
                     this.garbages.gadgets.forEach(m -> m.group = this);
 				}
+                bindings.remove("garbages");
 			}
 
 			// Add variables to suite
