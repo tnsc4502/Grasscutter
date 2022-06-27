@@ -425,7 +425,10 @@ public class ScriptLib {
 
 		var gadget = group.gadgets.get(configId);
 		var entity = context.getSceneScriptManager().createGadget(group.id, group.block_id, gadget);
-
+        if(entity == null) {
+            logger.debug("Failed to create a gadget on group: {}, block: {} configId: {} (Maybe there is a duplication.)", group.id, group.block_id, configId);
+            return 0;
+        }
 		context.getSceneScriptManager().addEntity(entity);
 
 		return 0;
