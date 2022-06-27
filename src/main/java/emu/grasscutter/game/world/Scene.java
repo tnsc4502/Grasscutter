@@ -217,7 +217,7 @@ public class Scene {
 		getPlayers().add(player);
 		player.setSceneId(this.getId());
 		player.setScene(this);
-		
+
 		this.setupPlayerAvatars(player);
 	}
 	
@@ -427,14 +427,17 @@ public class Scene {
 			challenge.onCheckTimeOut();
 		}
 	}
-	
+
 	// TODO - Test
 	public void checkSpawns() {
 		SpatialIndex<SpawnGroupEntry> list = GameDepot.getSpawnListById(this.getId());
 		Set<SpawnDataEntry> visible = new HashSet<>();
-		
+
 		for (Player player : this.getPlayers()) {
 			int RANGE = 100;
+			// Collection
+			player.getCollectionManager().onGadgetEntities(RANGE);
+
 			Collection<SpawnGroupEntry> entries = list.query(
 				new double[] {player.getPos().getX() - RANGE, player.getPos().getZ() - RANGE}, 
 				new double[] {player.getPos().getX() + RANGE, player.getPos().getZ() + RANGE}

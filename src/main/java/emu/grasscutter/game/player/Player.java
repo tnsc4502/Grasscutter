@@ -33,6 +33,8 @@ import emu.grasscutter.game.mail.MailHandler;
 import emu.grasscutter.game.managers.FurnitureManager;
 import emu.grasscutter.game.managers.InsectCaptureManager;
 import emu.grasscutter.game.managers.ResinManager;
+import emu.grasscutter.game.managers.collection.CollectionManager;
+import emu.grasscutter.game.managers.collection.CollectionRecordStore;
 import emu.grasscutter.game.managers.deforestation.DeforestationManager;
 import emu.grasscutter.game.managers.energy.EnergyManager;
 import emu.grasscutter.game.managers.forging.ActiveForgeData;
@@ -43,7 +45,6 @@ import emu.grasscutter.game.managers.SotSManager;
 import emu.grasscutter.game.props.ActionReason;
 import emu.grasscutter.game.props.ClimateType;
 import emu.grasscutter.game.props.PlayerProperty;
-import emu.grasscutter.game.props.SceneType;
 import emu.grasscutter.game.props.WatcherTriggerType;
 import emu.grasscutter.game.quest.QuestManager;
 import emu.grasscutter.game.shop.ShopLimit;
@@ -185,6 +186,9 @@ public class Player {
 	@Transient private BattlePassManager battlePassManager;
 	@Getter @Transient private ActivityManager activityManager;
 
+	@Transient private CollectionManager collectionManager;
+	private CollectionRecordStore collectionRecordStore;
+
 	private long springLastUsed;
 	private HashMap<String, MapMark> mapMarks;
 	private int nextResinRefresh;
@@ -218,6 +222,7 @@ public class Player {
 		this.flyCloakList = new HashSet<>();
 		this.costumeList = new HashSet<>();
 		this.towerData = new TowerData();
+		this.collectionRecordStore = new CollectionRecordStore();
 		this.unlockedForgingBlueprints = new HashSet<>();
 		this.unlockedCombines = new HashSet<>();
 		this.unlockedFurniture = new HashSet<>();
@@ -1308,6 +1313,20 @@ public class Player {
 		return deforestationManager;
 	}
 
+	public CollectionManager getCollectionManager() {
+		if(this.collectionManager==null){
+			this.collectionManager = new CollectionManager();
+		}
+		return this.collectionManager;
+	}
+
+	public CollectionRecordStore getCollectionRecordStore() {
+		if(this.collectionRecordStore==null){
+			this.collectionRecordStore = new CollectionRecordStore();
+		}
+		return collectionRecordStore;
+	}
+
 	public HashMap<String, MapMark> getMapMarks() { return mapMarks; }
 
 	public void setMapMarks(HashMap<String, MapMark> newMarks) { mapMarks = newMarks; }
@@ -1430,6 +1449,7 @@ public class Player {
 		}
 		//Make sure towerManager's player is online player
 		this.getTowerManager().setPlayer(this);
+		this.getCollectionManager().setPlayer(this);
 
 		// Load from db
 		this.getAvatars().loadFromDatabase();
@@ -1483,7 +1503,6 @@ public class Player {
 		session.send(new PacketCombineDataNotify(this.unlockedCombines));
 		this.forgingManager.sendForgeDataNotify();
 		this.resinManager.onPlayerLogin();
-
 		getTodayMoonCard(); // The timer works at 0:0, some users log in after that, use this method to check if they have received a reward today or not. If not, send the reward.
 
 		// Battle Pass trigger
