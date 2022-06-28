@@ -128,7 +128,6 @@ public class ScriptLib {
     public int AutoMonsterTide(ScriptLibContext context, int challengeIndex, int groupId, Object ordersConfigId, int tideCount, int sceneLimit, int param6) {
         logger.debug("[LUA] Call AutoMonsterTide with {},{},{},{},{},{}",
             challengeIndex,groupId,ordersConfigId,tideCount,sceneLimit,param6);
-
         SceneGroup group = context.getSceneScriptManager().getGroupById(groupId);
 
         if (group == null || group.monsters == null) {
@@ -136,7 +135,6 @@ public class ScriptLib {
         }
 
         context.getSceneScriptManager().startMonsterTideInGroup(group, ScriptUtils.toIntegerArray(ordersConfigId), tideCount, sceneLimit);
-
         return 0;
     }
 
