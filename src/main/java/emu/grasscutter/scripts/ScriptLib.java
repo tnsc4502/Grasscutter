@@ -125,20 +125,18 @@ public class ScriptLib {
 	}
 
 	// Some fields are guessed
-	public int AutoMonsterTide(ScriptLibContext context, int challengeIndex, int groupId, Integer[] ordersConfigId, int tideCount, int sceneLimit, int param6) {
-		logger.debug("[LUA] Call AutoMonsterTide with {},{},{},{},{},{}",
-				challengeIndex,groupId,ordersConfigId,tideCount,sceneLimit,param6);
+    public int AutoMonsterTide(ScriptLibContext context, int challengeIndex, int groupId, Object ordersConfigId, int tideCount, int sceneLimit, int param6) {
+        logger.debug("[LUA] Call AutoMonsterTide with {},{},{},{},{},{}",
+            challengeIndex,groupId,ordersConfigId,tideCount,sceneLimit,param6);
+        SceneGroup group = context.getSceneScriptManager().getGroupById(groupId);
 
-		SceneGroup group = context.getSceneScriptManager().getGroupById(groupId);
+        if (group == null || group.monsters == null) {
+            return 1;
+        }
 
-		if (group == null || group.monsters == null) {
-			return 1;
-		}
-
-		context.getSceneScriptManager().startMonsterTideInGroup(group, ordersConfigId, tideCount, sceneLimit);
-
-		return 0;
-	}
+        context.getSceneScriptManager().startMonsterTideInGroup(group, ScriptUtils.toIntegerArray(ordersConfigId), tideCount, sceneLimit);
+        return 0;
+    }
 
 	public int AddExtraGroupSuite(ScriptLibContext context, int groupId, int suite) {
 		logger.debug("[LUA] Call AddExtraGroupSuite with {},{}",
