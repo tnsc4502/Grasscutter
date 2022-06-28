@@ -316,9 +316,9 @@ public class ScriptLib {
 		logger.info("[LUA] " + msg);
 	}
 
-	public int TowerCountTimeStatus(ScriptLibContext context, int isDone, int var2){
-		logger.debug("[LUA] Call TowerCountTimeStatus with {},{}",
-				isDone,var2);
+	public int TowerCountTimeStatus(ScriptLibContext context, int isDone){
+		logger.debug("[LUA] Call TowerCountTimeStatus with {}",
+				isDone);
 		// TODO record time
 		return 0;
 	}
@@ -330,16 +330,15 @@ public class ScriptLib {
                 e.getGroupId() == context.getCurrentGroup().id)
             .count();
 	}
-	public int SetMonsterBattleByGroup(ScriptLibContext context, int var1, int var2, int var3){
-		logger.debug("[LUA] Call SetMonsterBattleByGroup with {},{},{}",
-				var1,var2,var3);
+	public int SetMonsterBattleByGroup(ScriptLibContext context, int var1, int var2){
+		logger.debug("[LUA] Call SetMonsterBattleByGroup with {},{}",
+				var1,var2);
 		// TODO
 		return 0;
 	}
 
-	public int CauseDungeonFail(ScriptLibContext context, int var1){
-		logger.debug("[LUA] Call CauseDungeonFail with {}",
-				var1);
+	public int CauseDungeonFail(ScriptLibContext context){
+		logger.debug("[LUA] Call CauseDungeonFail.");
 
 		return 0;
 	}
@@ -351,13 +350,13 @@ public class ScriptLib {
 		return context.getSceneScriptManager().getVariables().getOrDefault(name, 0);
 	}
 
-	public int SetIsAllowUseSkill(ScriptLibContext context, int canUse, int var2){
-		logger.debug("[LUA] Call SetIsAllowUseSkill with {},{}",
-				canUse,var2);
+    public int SetIsAllowUseSkill(ScriptLibContext context, int canUse) {
+        logger.debug("[LUA] Call SetIsAllowUseSkill with {}",
+            canUse);
 
-		context.getSceneScriptManager().getScene().broadcastPacket(new PacketCanUseSkillNotify(canUse == 1));
-		return 0;
-	}
+        context.getSceneScriptManager().getScene().broadcastPacket(new PacketCanUseSkillNotify(canUse == 1));
+        return 0;
+    }
 
     public int KillEntityByConfigId(ScriptLibContext context, Object table_){
         var table = (AbstractTableMap)table_;
@@ -399,9 +398,9 @@ public class ScriptLib {
 		return 0;
 	}
 
-	public int TowerMirrorTeamSetUp(ScriptLibContext context, int team, int var1) {
+	public int TowerMirrorTeamSetUp(ScriptLibContext context, int team) {
 		logger.debug("[LUA] Call TowerMirrorTeamSetUp with {},{}",
-				team,var1);
+				team);
 
 		context.getSceneScriptManager().unloadCurrentMonsterTide();
 		context.getSceneScriptManager().getScene().getPlayers().get(0).getTowerManager().mirrorTeamSetUp(team-1);
