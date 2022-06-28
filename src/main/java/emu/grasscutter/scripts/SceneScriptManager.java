@@ -340,7 +340,7 @@ public class SceneScriptManager {
                 .filter(e -> e.getConfigId() == g.config_id)
                 .findFirst();
             if(hasEntity.isPresent()){
-                hasEntity.get();
+                return null;
             }
         }
 		EntityGadget entity = new EntityGadget(getScene(), g.gadget_id, g.pos);
