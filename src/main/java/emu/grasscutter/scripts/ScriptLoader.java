@@ -2,6 +2,7 @@ package emu.grasscutter.scripts;
 
 import emu.grasscutter.Grasscutter;
 import emu.grasscutter.game.props.EntityType;
+import emu.grasscutter.game.quest.enums.QuestState;
 import emu.grasscutter.scripts.constants.EventType;
 import emu.grasscutter.scripts.constants.ScriptGadgetState;
 import emu.grasscutter.scripts.constants.ScriptRegionShape;
@@ -72,6 +73,7 @@ public class ScriptLoader {
         ScriptBinding.coerce(engine, "RegionShape", new ScriptRegionShape());
         ScriptBinding.coerce(engine, "GadgetState", new ScriptGadgetState());
         ScriptBinding.coerce(engine, "EntityType", Arrays.stream(EntityType.values()).collect(Collectors.toMap(e -> e.name().toUpperCase(), EntityType::getValue)));
+        ScriptBinding.coerce(engine, "QuestState", Arrays.stream(QuestState.values()).collect(Collectors.toMap(e -> e.name().toUpperCase(), QuestState::getValue)));
     }
 
     public static ScriptEngine getEngine() {

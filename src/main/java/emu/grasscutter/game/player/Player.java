@@ -4,10 +4,10 @@ import dev.morphia.annotations.*;
 import emu.grasscutter.GameConstants;
 import emu.grasscutter.Grasscutter;
 import emu.grasscutter.data.GameData;
+import emu.grasscutter.data.excels.PersonalLineData;
 import emu.grasscutter.data.excels.PlayerLevelData;
 import emu.grasscutter.data.excels.WeatherData;
 import emu.grasscutter.database.DatabaseHelper;
-import emu.grasscutter.database.DatabaseManager;
 import emu.grasscutter.game.Account;
 import emu.grasscutter.game.CoopRequest;
 import emu.grasscutter.game.ability.AbilityManager;
@@ -30,6 +30,7 @@ import emu.grasscutter.game.inventory.GameItem;
 import emu.grasscutter.game.inventory.Inventory;
 import emu.grasscutter.game.mail.Mail;
 import emu.grasscutter.game.mail.MailHandler;
+import emu.grasscutter.game.managers.CookingManager;
 import emu.grasscutter.game.managers.FurnitureManager;
 import emu.grasscutter.game.managers.InsectCaptureManager;
 import emu.grasscutter.game.managers.ResinManager;
@@ -64,7 +65,7 @@ import emu.grasscutter.net.proto.OnlinePlayerInfoOuterClass.OnlinePlayerInfo;
 import emu.grasscutter.net.proto.PlayerLocationInfoOuterClass.PlayerLocationInfo;
 import emu.grasscutter.net.proto.ProfilePictureOuterClass.ProfilePicture;
 import emu.grasscutter.net.proto.SocialDetailOuterClass.SocialDetail;
-
+import emu.grasscutter.net.proto.VisionTypeOuterClass.VisionType;
 import emu.grasscutter.server.event.player.PlayerJoinEvent;
 import emu.grasscutter.server.event.player.PlayerQuitEvent;
 import emu.grasscutter.server.game.GameServer;
@@ -113,6 +114,7 @@ public class Player {
 	private Set<Integer> unlockedFurniture;
 	private Set<Integer> unlockedFurnitureSuite;
 	private List<ActiveForgeData> activeForges;
+	private Map<Integer, Integer> unlockedRecipies;
 
 	private Integer widgetId;
 
@@ -184,6 +186,8 @@ public class Player {
 	@Transient private GameHome home;
 	@Transient private FurnitureManager furnitureManager;
 	@Transient private BattlePassManager battlePassManager;
+	@Transient private CookingManager cookingManager;
+	// @Transient private
 	@Getter @Transient private ActivityManager activityManager;
 
 	@Transient private CollectionManager collectionManager;
@@ -228,6 +232,7 @@ public class Player {
 		this.unlockedFurniture = new HashSet<>();
 		this.unlockedFurnitureSuite = new HashSet<>();
 		this.activeForges = new ArrayList<>();
+		this.unlockedRecipies = new HashMap<>();
 
 		this.setSceneId(3);
 		this.setRegionId(1);
@@ -254,6 +259,7 @@ public class Player {
 		this.resinManager = new ResinManager(this);
 		this.forgingManager = new ForgingManager(this);
 		this.furnitureManager = new FurnitureManager(this);
+		this.cookingManager = new CookingManager(this);
 	}
 
 	// On player creation
@@ -288,6 +294,7 @@ public class Player {
 		this.deforestationManager = new DeforestationManager(this);
 		this.forgingManager = new ForgingManager(this);
 		this.furnitureManager = new FurnitureManager(this);
+		this.cookingManager = new CookingManager(this);
 	}
 
 	public int getUid() {
@@ -461,7 +468,7 @@ public class Player {
 	public int getWorldLevel() {
 		return this.getProperty(PlayerProperty.PROP_PLAYER_WORLD_LEVEL);
 	}
-	
+
 	public boolean setWorldLevel(int level) {
 		if (this.setProperty(PlayerProperty.PROP_PLAYER_WORLD_LEVEL, level)) {
 			if (this.world.getHost() == this)  // Don't update World's WL if we are in someone else's world
@@ -664,6 +671,10 @@ public class Player {
 
 	public List<ActiveForgeData> getActiveForges() {
 		return this.activeForges;
+	}
+
+	public Map<Integer, Integer> getUnlockedRecipies() {
+		return this.unlockedRecipies;
 	}
 
 	public MpSettingType getMpSetting() {
@@ -1105,7 +1116,6 @@ public class Player {
 				}
 			}
 		} else if (entity instanceof EntityGadget gadget) {
-
 			if (gadget.getContent() == null) {
 				return;
 			}
@@ -1113,7 +1123,7 @@ public class Player {
 			boolean shouldDelete = gadget.getContent().onInteract(this, opType);
 
 			if (shouldDelete) {
-				entity.getScene().removeEntity(entity);
+				entity.getScene().removeEntity(entity, VisionType.VISION_TYPE_REMOVE);
 			}
 		} else if (entity instanceof EntityMonster monster) {
 			insectCaptureManager.arrestSmallCreature(monster);
@@ -1299,6 +1309,10 @@ public class Player {
 		return battlePassManager;
 	}
 
+	public CookingManager getCookingManager() {
+		return cookingManager;
+	}
+
 	public void loadBattlePassManager() {
 		if (this.battlePassManager != null) return;
 		this.battlePassManager = DatabaseHelper.loadBattlePass(this);
@@ -1408,6 +1422,10 @@ public class Player {
 		// Reset daily BP missions.
 		this.getBattlePassManager().resetDailyMissions();
 
+		// Trigger login BP mission, so players who are online during the reset
+		// don't have to relog to clear the mission.
+		this.getBattlePassManager().triggerMission(WatcherTriggerType.TRIGGER_LOGIN);
+
 		// Reset weekly BP missions.
 		if (currentDate.getDayOfWeek() == DayOfWeek.MONDAY) {
 			this.getBattlePassManager().resetWeeklyMissions();
@@ -1503,6 +1521,7 @@ public class Player {
 		session.send(new PacketCombineDataNotify(this.unlockedCombines));
 		this.forgingManager.sendForgeDataNotify();
 		this.resinManager.onPlayerLogin();
+		this.cookingManager.sendCookDataNofity();
 		getTodayMoonCard(); // The timer works at 0:0, some users log in after that, use this method to check if they have received a reward today or not. If not, send the reward.
 
 		// Battle Pass trigger
@@ -1578,7 +1597,17 @@ public class Player {
 		getServer().getPlayers().values().removeIf(player1 -> player1 == this);
 	}
 
-	public enum SceneLoadState {
+    public int getLegendaryKey() {
+        return this.getProperty(PlayerProperty.PROP_PLAYER_LEGENDARY_KEY);
+    }
+    public synchronized void addLegendaryKey(int count) {
+        this.setProperty(PlayerProperty.PROP_PLAYER_LEGENDARY_KEY, getLegendaryKey() + count);
+    }
+    public synchronized void useLegendaryKey(int count) {
+        this.setProperty(PlayerProperty.PROP_PLAYER_LEGENDARY_KEY, getLegendaryKey() - count);
+    }
+
+    public enum SceneLoadState {
 		NONE(0), LOADING(1), INIT(2), LOADED(3);
 
 		private final int value;

@@ -11,18 +11,17 @@ import emu.grasscutter.utils.Utils;
 
 @Opcodes(PacketOpcodes.ClientAbilityInitFinishNotify)
 public class HandlerClientAbilityInitFinishNotify extends PacketHandler {
-	
+
 	@Override
 	public void handle(GameSession session, byte[] header, byte[] payload) throws Exception {
 		ClientAbilityInitFinishNotify notif = ClientAbilityInitFinishNotify.parseFrom(payload);
 
 		Player player = session.getPlayer();
 		for (AbilityInvokeEntry entry : notif.getInvokesList()) {
-			if(player.getCollectionManager().onRockDestroy(entry)) continue;
 			player.getAbilityManager().onAbilityInvoke(entry);
 			player.getClientAbilityInitFinishHandler().addEntry(entry.getForwardType(), entry);
 		}
-		
+
 		if (notif.getInvokesList().size() > 0) {
 			session.getPlayer().getClientAbilityInitFinishHandler().update(session.getPlayer());
 		}

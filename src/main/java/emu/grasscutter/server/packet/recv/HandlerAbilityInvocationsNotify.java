@@ -19,14 +19,13 @@ import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
 
 @Opcodes(PacketOpcodes.AbilityInvocationsNotify)
 public class HandlerAbilityInvocationsNotify extends PacketHandler {
-	
+
 	@Override
 	public void handle(GameSession session, byte[] header, byte[] payload) throws Exception {
 		AbilityInvocationsNotify notif = AbilityInvocationsNotify.parseFrom(payload);
 
 		Player player = session.getPlayer();
 		for (AbilityInvokeEntry entry : notif.getInvokesList()) {
-			if(player.getCollectionManager().onRockDestroy(entry)) continue;
 			player.getAbilityManager().onAbilityInvoke(entry);
 			player.getAbilityInvokeHandler().addEntry(entry.getForwardType(), entry);
 		}

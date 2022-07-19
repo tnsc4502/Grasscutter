@@ -7,6 +7,7 @@ import emu.grasscutter.game.props.FightProperty;
 import emu.grasscutter.net.packet.Opcodes;
 import emu.grasscutter.net.packet.PacketOpcodes;
 import emu.grasscutter.net.proto.AttackResultOuterClass;
+import emu.grasscutter.net.proto.AttackResultOuterClass.AttackResult;
 import emu.grasscutter.net.proto.CombatInvocationsNotifyOuterClass.CombatInvocationsNotify;
 import emu.grasscutter.net.proto.CombatInvokeEntryOuterClass.CombatInvokeEntry;
 import emu.grasscutter.net.proto.EntityMoveInfoOuterClass.EntityMoveInfo;
@@ -34,16 +35,9 @@ public class HandlerCombatInvocationsNotify extends PacketHandler {
 		for (CombatInvokeEntry entry : notif.getInvokeListList()) {
 			switch (entry.getArgumentType()) {
 				case COMBAT_TYPE_ARGUMENT_EVT_BEING_HIT:
-
-
 					EvtBeingHitInfo hitInfo = EvtBeingHitInfo.parseFrom(entry.getCombatData());
-					AttackResultOuterClass.AttackResult attackResult = hitInfo.getAttackResult();
+					AttackResult attackResult = hitInfo.getAttackResult();
 					Player player = session.getPlayer();
-
-					// Handle by Collection
-					if(player.getCollectionManager().findCollection(attackResult.getDefenseId())!=null) {
-						continue;
-					}
 
 					// Handle damage
 					player.getAttackResults().add(attackResult);

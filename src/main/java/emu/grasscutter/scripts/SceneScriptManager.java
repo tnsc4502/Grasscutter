@@ -7,6 +7,7 @@ import emu.grasscutter.data.GameData;
 import emu.grasscutter.data.excels.MonsterData;
 import emu.grasscutter.data.excels.WorldLevelData;
 import emu.grasscutter.game.entity.*;
+import emu.grasscutter.game.props.EntityType;
 import emu.grasscutter.game.world.Scene;
 import emu.grasscutter.net.proto.VisionTypeOuterClass;
 import emu.grasscutter.scripts.constants.EventType;
@@ -186,9 +187,10 @@ public class SceneScriptManager {
 		}
 
 		for (var region : this.regions.values()) {
+            // currently all condition_ENTER_REGION Events check for avatar, so we have no necessary to add other types of entity
 			getScene().getEntities().values()
 				.stream()
-				.filter(e -> e.getEntityType() <= 2 && region.getMetaRegion().contains(e.getPosition()))
+				.filter(e -> e.getEntityType() == EntityType.Avatar.getValue() && region.getMetaRegion().contains(e.getPosition()))
 				.forEach(region::addEntity);
 
             var players = region.getScene().getPlayers();
@@ -197,7 +199,10 @@ public class SceneScriptManager {
                 targetID = players.get(0).getUid();
 
 			if (region.hasNewEntities()) {
-				callEvent(EventType.EVENT_ENTER_REGION, new ScriptArgs(region.getConfigId()).setSourceEntityId(region.getId()).setTargetEntityId(targetID));
+				callEvent(EventType.EVENT_ENTER_REGION, new ScriptArgs(region.getConfigId())
+                    .setSourceEntityId(region.getId())
+                    .setTargetEntityId(region.getFirstEntityId())
+                );
 
 				region.resetNewEntities();
 			}

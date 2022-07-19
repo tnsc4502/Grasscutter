@@ -7,9 +7,12 @@ import emu.grasscutter.game.entity.GameEntity;
 import emu.grasscutter.game.entity.gadget.GadgetWorktop;
 import emu.grasscutter.game.dungeons.challenge.factory.ChallengeFactory;
 import emu.grasscutter.game.props.EntityType;
+import emu.grasscutter.game.quest.enums.QuestState;
+import emu.grasscutter.game.quest.enums.QuestTrigger;
 import emu.grasscutter.scripts.data.SceneGroup;
 import emu.grasscutter.scripts.data.SceneRegion;
 import emu.grasscutter.server.packet.send.PacketCanUseSkillNotify;
+import emu.grasscutter.server.packet.send.PacketDungeonShowReminderNotify;
 import emu.grasscutter.server.packet.send.PacketWorktopOptionNotify;
 import io.netty.util.concurrent.FastThreadLocal;
 
@@ -17,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.jnlua.util.AbstractTableMap;
 
+import javax.swing.text.html.parser.Entity;
 import java.util.AbstractMap;
 import java.util.Optional;
 
@@ -316,6 +320,10 @@ public class ScriptLib {
 		logger.info("[LUA] " + msg);
 	}
 
+    public void PrintLog(String msg) {
+        logger.info("[LUA] " + msg);
+    }
+
 	public int TowerCountTimeStatus(ScriptLibContext context, int isDone){
 		logger.debug("[LUA] Call TowerCountTimeStatus with {}",
 				isDone);
@@ -471,6 +479,11 @@ public class ScriptLib {
 		logger.debug("[LUA] Call AddQuestProgress with {}",
 				var1);
 
+        for(var player : context.getSceneScriptManager().getScene().getPlayers()){
+            player.getQuestManager().triggerEvent(QuestTrigger.QUEST_COND_LUA_NOTIFY, var1);
+            player.getQuestManager().triggerEvent(QuestTrigger.QUEST_CONTENT_LUA_NOTIFY, var1);
+        }
+
 		return 0;
 	}
 
@@ -495,8 +508,46 @@ public class ScriptLib {
 		return 1;
 	}
 
-    //Not fully implemented. But most of the usage of this function rely on EntityType.AVATAR.
-    public EntityType GetEntityType(int tid) {
-        return EntityType.Avatar;
+    public int GetEntityType(int entityId){
+        /*var entity = getSceneScriptManager().getScene().getEntityById(entityId);
+        if(entity == null){
+            return EntityType.None.getValue();
+        }*/
+
+        return EntityType.Avatar.getValue();
+    }
+
+    public int GetQuestState(ScriptLibContext context, int entityId, int questId){
+        var player = context.getSceneScriptManager().getScene().getWorld().getHost();
+
+        var quest = player.getQuestManager().getQuestById(questId);
+        if(quest == null){
+            return QuestState.QUEST_STATE_NONE.getValue();
+        }
+
+        return quest.getState().getValue();
+    }
+
+    public int ShowReminder(ScriptLibContext context, int reminderId){
+        context.getSceneScriptManager().getScene().broadcastPacket(new PacketDungeonShowReminderNotify(reminderId));
+        return 0;
+    }
+
+    public int RemoveEntityByConfigId(ScriptLibContext context, int groupId, int entityType, int configId){
+        logger.debug("[LUA] Call RemoveEntityByConfigId");
+
+        var entity = context.getSceneScriptManager().getScene().getEntities().values().stream()
+            .filter(e -> e.getGroupId() == groupId)
+            .filter(e -> e.getEntityType() == entityType)
+            .filter(e -> e.getConfigId() == configId)
+            .findFirst();
+
+        if(entity.isEmpty()){
+            return 1;
+        }
+
+        context.getSceneScriptManager().getScene().removeEntity(entity.get());
+
+        return 0;
     }
 }

@@ -12,22 +12,22 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 
 public class GadgetWorktop extends GadgetContent {
 	private IntSet worktopOptions;
-	
+
 	public GadgetWorktop(EntityGadget gadget) {
-		super.setGadget(gadget);
+		super(gadget);
 	}
-	
+
 	public IntSet getWorktopOptions() {
 		return worktopOptions;
 	}
-	
+
 	public void addWorktopOptions(int[] options) {
 		if (this.worktopOptions == null) {
 			this.worktopOptions = new IntOpenHashSet();
 		}
 		Arrays.stream(options).forEach(this.worktopOptions::add);
 	}
-	
+
 	public void removeWorktopOption(int option) {
 		if (this.worktopOptions == null) {
 			return;
@@ -43,11 +43,11 @@ public class GadgetWorktop extends GadgetContent {
 		if (this.worktopOptions == null) {
 			return;
 		}
-		
+
 		WorktopInfo worktop = WorktopInfo.newBuilder()
 				.addAllOptionList(this.getWorktopOptions())
 				.build();
-		
+
 		gadgetInfo.setWorktop(worktop);
 	}
 }

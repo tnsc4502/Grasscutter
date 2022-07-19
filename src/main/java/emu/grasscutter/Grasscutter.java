@@ -4,6 +4,8 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
+import emu.grasscutter.Grasscutter.ServerDebugMode;
 import emu.grasscutter.auth.AuthenticationSystem;
 import emu.grasscutter.auth.DefaultAuthentication;
 import emu.grasscutter.command.CommandMap;
@@ -105,6 +107,23 @@ public final class Grasscutter {
                     exitEarly = true;
                 }
                 case "-debug" -> {
+                    // Set the logger to debug.
+                    log.setLevel(Level.DEBUG);
+                    log.debug("The logger is now running in debug mode.");
+
+                    // Change loggers to debug.
+                    ((Logger) LoggerFactory.getLogger("express"))
+                        .setLevel(Level.INFO);
+                    ((Logger) LoggerFactory.getLogger("org.quartz"))
+                        .setLevel(Level.INFO);
+                    ((Logger) LoggerFactory.getLogger("org.reflections"))
+                        .setLevel(Level.INFO);
+                    ((Logger) LoggerFactory.getLogger("org.eclipse.jetty"))
+                        .setLevel(Level.INFO);
+                    ((Logger) LoggerFactory.getLogger("org.mongodb.driver"))
+                        .setLevel(Level.INFO);
+                }
+                case "-debugall" -> {
                     // Set the logger to debug.
                     log.setLevel(Level.DEBUG);
                     log.debug("The logger is now running in debug mode.");
@@ -395,6 +414,6 @@ public final class Grasscutter {
     }
 
     public enum ServerDebugMode {
-        ALL, MISSING, NONE
+        ALL, MISSING, WHITELIST, BLACKLIST, NONE
     }
 }
