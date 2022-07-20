@@ -90,6 +90,7 @@ public class SceneScriptManager {
 	}
 	public void registerTrigger(SceneTrigger trigger) {
 		getTriggersByEvent(trigger.event).add(trigger);
+        Grasscutter.getLogger().debug("Registered trigger {}", trigger.name);
 	}
 	public void deregisterTrigger(List<SceneTrigger> triggers) {
 		triggers.forEach(this::deregisterTrigger);
@@ -120,6 +121,7 @@ public class SceneScriptManager {
 
 	public void registerRegion(EntityRegion region) {
 		regions.put(region.getId(), region);
+        Grasscutter.getLogger().debug("Registered region {}, from group {}", region.getId(), region.getGroupId());
 	}
     public void registerRegionInGroupSuite(SceneGroup group, SceneSuite suite){
         suite.sceneRegions.stream().map(region -> new EntityRegion(this.getScene(), region))
@@ -197,8 +199,8 @@ public class SceneScriptManager {
             int targetID = 0;
             if(players.size() > 0)
                 targetID = players.get(0).getUid();
-
-			if (region.hasNewEntities()) {
+            // Player might already be in the region
+			if (region.getEntities().contains(targetID)) {
 				callEvent(EventType.EVENT_ENTER_REGION, new ScriptArgs(region.getConfigId())
                     .setSourceEntityId(region.getId())
                     .setTargetEntityId(region.getFirstEntityId())
@@ -206,6 +208,21 @@ public class SceneScriptManager {
 
 				region.resetNewEntities();
 			}
+
+            for(int entityId : region.getEntities()) {
+                if(!region.getMetaRegion().contains(getScene().getEntityById(entityId).getPosition())) {
+                    region.removeEntity(entityId);
+
+                }
+            }
+            if (region.entityLeave()) {
+                callEvent(EventType.EVENT_LEAVE_REGION, new ScriptArgs(region.getConfigId())
+                    .setSourceEntityId(region.getId())
+                    .setTargetEntityId(region.getFirstEntityId())
+                );
+
+                region.resetEntityLeave();
+            }
 		}
 	}
 
@@ -290,17 +307,28 @@ public class SceneScriptManager {
 
 	private void realCallEvent(int eventType, ScriptArgs params) {
         try {
-            for (SceneTrigger trigger : this.getTriggersByEvent(eventType)) {
+            Set<SceneTrigger> relevantTriggers = new HashSet<>();
+            if(eventType == EventType.EVENT_ENTER_REGION || eventType == EventType.EVENT_LEAVE_REGION) {
+                List<SceneTrigger> relevantTriggersList = this.getTriggersByEvent(eventType).stream()
+                    .filter(p -> p.condition.contains(String.valueOf(params.param1))).toList();
+                relevantTriggers = new HashSet<>(relevantTriggersList);
+            } else {relevantTriggers = this.getTriggersByEvent(eventType);}
+            for (SceneTrigger trigger : relevantTriggers) {
                 Object ret = this.callScriptFunc(trigger.condition, trigger.currentGroup, params);
                 Grasscutter.getLogger().trace("Call Condition Trigger {}", trigger.condition);
-
                 if (ret instanceof Boolean && ((Boolean)ret) == true) {
                     // the SetGroupVariableValueByGroup in tower need the param to record the first stage time
                     this.callScriptFunc(trigger.action, trigger.currentGroup, params);
                     Grasscutter.getLogger().trace("Call Action Trigger {}", trigger.action);
                 }
                 //TODO some ret may not bool
-
+                if(trigger.event == EventType.EVENT_ENTER_REGION) {
+                    EntityRegion region = this.regions.values().stream().filter(p -> p.getConfigId() == params.param1).toList().get(0);
+                    getScene().getPlayers().forEach(p -> p.onEnterRegion(region.getMetaRegion()));
+                } else if(trigger.event == EventType.EVENT_LEAVE_REGION) {
+                    EntityRegion region = this.regions.values().stream().filter(p -> p.getConfigId() == params.param1).toList().get(0);
+                    getScene().getPlayers().forEach(p -> p.onLeaveRegion(region.getMetaRegion()));
+                }
             }
         } catch(Exception e) {
             e.printStackTrace();

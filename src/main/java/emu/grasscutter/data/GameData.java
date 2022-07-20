@@ -106,6 +106,7 @@ public class GameData {
     @Getter private static final Int2ObjectMap<MusicGameBasicData> musicGameBasicDataMap = new Int2ObjectOpenHashMap<>();
     @Getter private static final Int2ObjectMap<PersonalLineData> personalLineDataMap = new Int2ObjectOpenHashMap<>();
     @Getter private static final Int2ObjectMap<ChapterData> chapterDataMap = new Int2ObjectOpenHashMap<>();
+    @Getter private static final Int2ObjectMap<TriggerExcelConfigData> triggerExcelConfigDataMap = new Int2ObjectOpenHashMap<>();
 
 	// Cache
 	private static Map<Integer, List<Integer>> fetters = new HashMap<>();

@@ -288,13 +288,11 @@ public class ScriptLib {
         int suite = ((Integer)table.get("suite"));
 		logger.debug("[LUA] Call RefreshGroup with {}",
 				printTable(table));
-
 		SceneGroup group = context.getSceneScriptManager().getGroupById(groupId);
 
 		if (group == null || group.monsters == null) {
 			return 1;
 		}
-
 		context.getSceneScriptManager().refreshGroup(group, suite);
 
 		return 0;
@@ -480,7 +478,7 @@ public class ScriptLib {
 				var1);
 
         for(var player : context.getSceneScriptManager().getScene().getPlayers()){
-            player.getQuestManager().triggerEvent(QuestTrigger.QUEST_COND_LUA_NOTIFY, var1);
+            player.getQuestManager().triggerEvent(QuestTrigger.QUEST_COND_LUA_NOTIFY, var1,0, 0, 0, 0);
             player.getQuestManager().triggerEvent(QuestTrigger.QUEST_CONTENT_LUA_NOTIFY, var1);
         }
 

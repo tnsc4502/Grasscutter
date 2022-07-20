@@ -3,7 +3,9 @@ package emu.grasscutter.game.quest;
 import java.util.Set;
 
 import emu.grasscutter.data.excels.QuestData;
+import emu.grasscutter.game.player.Player;
 import emu.grasscutter.game.quest.handlers.QuestExecHandler;
+import jdk.jshell.spi.ExecutionControl;
 import org.reflections.Reflections;
 
 import emu.grasscutter.Grasscutter;
@@ -60,8 +62,8 @@ public class ServerQuestHandler {
 	public boolean triggerCondition(GameQuest quest, QuestCondition condition, String paramStr, int... params) {
 		QuestBaseHandler handler = condHandlers.get(condition.getType().getValue());
 
-		if (handler == null || quest.getData() == null) {
-            Grasscutter.getLogger().debug("Could not trigger condition {} at {}", condition.getType().getValue(), quest.getData());
+		if (handler == null || quest.getQuestData() == null) {
+            Grasscutter.getLogger().debug("Could not trigger condition {} at {}", condition.getType().getValue(), quest.getQuestData());
 			return false;
 		}
 
@@ -71,8 +73,8 @@ public class ServerQuestHandler {
 	public boolean triggerContent(GameQuest quest, QuestCondition condition, String paramStr, int... params) {
 		QuestBaseHandler handler = contHandlers.get(condition.getType().getValue());
 
-		if (handler == null || quest.getData() == null) {
-            Grasscutter.getLogger().debug("Could not trigger content {} at {}", condition.getType().getValue(), quest.getData());
+		if (handler == null || quest.getQuestData() == null) {
+            Grasscutter.getLogger().debug("Could not trigger content {} at {}", condition.getType().getValue(), quest.getQuestData());
 			return false;
 		}
 
@@ -82,8 +84,8 @@ public class ServerQuestHandler {
 	public boolean triggerExec(GameQuest quest, QuestExecParam execParam, String... params) {
 		QuestExecHandler handler = execHandlers.get(execParam.getType().getValue());
 
-		if (handler == null || quest.getData() == null) {
-            Grasscutter.getLogger().debug("Could not trigger exec {} at {}", execParam.getType().getValue(), quest.getData());
+		if (handler == null || quest.getQuestData() == null) {
+            Grasscutter.getLogger().debug("Could not trigger exec {} at {}", execParam.getType().getValue(), quest.getQuestData());
 			return false;
 		}
 

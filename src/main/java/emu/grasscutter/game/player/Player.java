@@ -48,6 +48,7 @@ import emu.grasscutter.game.props.ClimateType;
 import emu.grasscutter.game.props.PlayerProperty;
 import emu.grasscutter.game.props.WatcherTriggerType;
 import emu.grasscutter.game.quest.QuestManager;
+import emu.grasscutter.game.quest.enums.QuestTrigger;
 import emu.grasscutter.game.shop.ShopLimit;
 import emu.grasscutter.game.tower.TowerData;
 import emu.grasscutter.game.tower.TowerManager;
@@ -66,6 +67,7 @@ import emu.grasscutter.net.proto.PlayerLocationInfoOuterClass.PlayerLocationInfo
 import emu.grasscutter.net.proto.ProfilePictureOuterClass.ProfilePicture;
 import emu.grasscutter.net.proto.SocialDetailOuterClass.SocialDetail;
 import emu.grasscutter.net.proto.VisionTypeOuterClass.VisionType;
+import emu.grasscutter.scripts.data.SceneRegion;
 import emu.grasscutter.server.event.player.PlayerJoinEvent;
 import emu.grasscutter.server.event.player.PlayerQuitEvent;
 import emu.grasscutter.server.game.GameServer;
@@ -104,7 +106,8 @@ public class Player {
 	private Position rotation;
 	private PlayerBirthday birthday;
 	private PlayerCodex codex;
-    @Getter private PlayerOpenStateManager openStateManager;
+  @Getter private Map<Integer,Integer> questGlobalVariables;
+  @Getter private PlayerOpenStateManager openStateManager;
 	private Map<Integer, Integer> properties;
 	private Set<Integer> nameCardList;
 	private Set<Integer> flyCloakList;
@@ -617,6 +620,32 @@ public class Player {
 	public void setQuestManager(QuestManager questManager) {
 		this.questManager = questManager;
 	}
+
+    public void onEnterRegion(SceneRegion region) {
+        getQuestManager().forEachActiveQuest(quest -> {
+            if(quest.getTriggers().containsKey("ENTER_REGION_"+ String.valueOf(region.config_id))) {
+                // If trigger hasn't been fired yet
+                if(!Boolean.TRUE.equals(quest.getTriggers().put("ENTER_REGION_"+ String.valueOf(region.config_id), true))) {
+                    //getSession().send(new PacketServerCondMeetQuestListUpdateNotify());
+                    getQuestManager().triggerEvent(QuestTrigger.QUEST_CONTENT_TRIGGER_FIRE, quest.getTriggerData().get("ENTER_REGION_"+ String.valueOf(region.config_id)).getId(),0);
+                }
+            }
+        });
+
+    }
+
+    public void onLeaveRegion(SceneRegion region) {
+        getQuestManager().forEachActiveQuest(quest -> {
+            if(quest.getTriggers().containsKey("LEAVE_REGION_"+ String.valueOf(region.config_id))) {
+                // If trigger hasn't been fired yet
+                if(!Boolean.TRUE.equals(quest.getTriggers().put("LEAVE_REGION_"+ String.valueOf(region.config_id), true))) {
+                    //getSession().send(new PacketServerCondMeetQuestListUpdateNotify());
+                    getQuestManager().triggerEvent(QuestTrigger.QUEST_CONTENT_TRIGGER_FIRE, quest.getTriggerData().get("LEAVE_REGION_"+ String.valueOf(region.config_id)).getId(),0);
+                }
+            }
+        });
+
+    }
 
 	public PlayerGachaInfo getGachaInfo() {
 		return gachaInfo;
